@@ -251,7 +251,7 @@ body.ens .m.on .ck{background:var(--azul);border-color:var(--azul);color:#fff}
           <label id="infMusL" class="oculto">Músico<select id="infMus"></select></label>
         </div>
         <div id="infRes"></div>
-        <div id="infPdfCaja" class="oculto"><button class="btn oscuro" id="infPdf" style="margin-top:14px">📄 Sacar el PDF firmado</button><p class="inf-nota" id="infPdfNota" style="margin-top:8px"></p><div id="infPdfListo" class="oculto" style="margin-top:10px;background:#eef6ec;border:1px solid #cfe3ca;border-radius:16px;padding:12px"><p id="infPdfListoTxt" style="margin:0 0 10px;font-size:14px;color:#2f5d2b"></p><button class="btn oro" id="infPdfAbrir" style="margin:0">📤 Abrir o enviar el PDF</button></div></div>
+        <div id="infPdfCaja" class="oculto"><button class="btn oscuro" id="infPdf" style="margin-top:14px">📄 Sacar el PDF firmado</button><p class="inf-nota" id="infPdfNota" style="margin-top:8px"></p><div id="infPdfListo" class="oculto" style="margin-top:10px;background:#eef6ec;border:1px solid #cfe3ca;border-radius:16px;padding:12px"><p id="infPdfListoTxt" style="margin:0 0 10px;font-size:14px;color:#2f5d2b"></p><div style="display:flex;gap:8px"><button class="btn oro" id="infPdfVer" style="margin:0;flex:1">👁 Ver el PDF</button><button class="btn oscuro" id="infPdfAbrir" style="margin:0;flex:1">📤 Enviar</button></div><p style="font-size:12.5px;color:#4d6b49;margin:8px 2px 0">«Ver» lo guarda en el móvil: toca «Abrir» en el aviso de descarga.</p></div></div>
       </div>
       <div id="firmaPanel" class="firma-velo oculto"><div class="firma-caja">
         <b class="firma-tit">Tu firma</b>
@@ -687,11 +687,17 @@ $('infPdf').onclick = function () {
     $('infPdfListoTxt').innerHTML = (r.firmado ? '✓ <b>PDF firmado</b> listo.' : '✓ <b>PDF</b> listo (sin firma).') + ' También queda guardado en Drive, en Informes Ayuntamiento.';
   }).catch(infError).then(function () { b.disabled = false; pintarBotonPdf(); });
 };
-// Compartir o descargar tiene que ser justo al tocar: por eso va en su propio botón
+// Ver y enviar tienen que ser justo al tocar: por eso van en sus propios botones
+function descargarPdf() { var a = document.createElement('a'); a.href = URL.createObjectURL(PDF_LISTO); a.download = PDF_LISTO.name; document.body.appendChild(a); a.click(); a.remove(); }
+$('infPdfVer').onclick = function () {
+  if (!PDF_LISTO) return;
+  if (/Android|iPhone|iPad/i.test(navigator.userAgent)) { descargarPdf(); toast('Guardado en el móvil: toca «Abrir» en el aviso de descarga (o búscalo en «Descargas»)', 5000); }
+  else window.open(URL.createObjectURL(PDF_LISTO), '_blank');
+};
 $('infPdfAbrir').onclick = function () {
   if (!PDF_LISTO) return;
   if (navigator.canShare && navigator.canShare({ files: [PDF_LISTO] })) navigator.share({ files: [PDF_LISTO], title: PDF_LISTO.name }).catch(function () {});
-  else { var a = document.createElement('a'); a.href = URL.createObjectURL(PDF_LISTO); a.download = PDF_LISTO.name; document.body.appendChild(a); a.click(); a.remove(); toast('Descargado: míralo en «Descargas»', 4000); }
+  else { descargarPdf(); toast('Descargado: míralo en «Descargas» para enviarlo', 4000); }
 };
 function pintarBotonPdf() {
   if (INF.tipo !== 'ayuntamiento') $('infPdfListo').classList.add('oculto');
