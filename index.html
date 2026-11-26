@@ -502,7 +502,7 @@ function abrirLista() {
     return '<div class="grupo"><h3><span>' + esc(bonito(g)) + '</span><span class="cnt"></span></h3>' +
       grupos[g].sort(function (a, b) { return a.nombre.localeCompare(b.nombre, 'es'); }).map(function (m) {
         return '<div class="m' + (A.sel.has(m.id) ? ' on' : '') + '" data-id="' + esc(m.id) + '" data-q="' + esc(norm(m.nombre + ' ' + g)) + '">' +
-          '<div class="ck">✓</div><div class="n">' + esc(bonito(m.nombre)) + '</div>' + (m.educando ? '<span class="tag">EDUCANDO</span>' : '') + '</div>';
+          '<div class="ck">✓</div><div class="n">' + esc(bonito(m.nombre)) + '</div>' + (m.refuerzo ? '<span class="tag">REFUERZO</span>' : m.educando ? '<span class="tag">EDUCANDO</span>' : '') + '</div>';
       }).join('') + '</div>';
   }).join('') || '<div class="vacio">No hay músicos. Añádelos en la pestaña «Músicos» de la hoja.</div>';
   $('bBorrar').classList.toggle('oculto', !A.existente);
@@ -733,13 +733,13 @@ function pintarInforme(r) {
   } else if (r.tipo === 'participacion') {
     h += kpis([[r.actuaciones, 'actuaciones'], [eur(r.total), 'total a pagar']]) +
       '<table class="inf-t"><tr><th>Músico</th><th class="c">Actuac.</th><th class="r">Total</th></tr>' +
-      (r.filas.map(function (f) { return '<tr><td>' + nomBonito(f.nombre) + '<small>' + esc(f.instrumento) + (f.educando ? ' · educando' : '') + '</small></td><td class="c">' + f.n + '<small>' + pctTxt(f.pct) + '</small></td><td class="r"><b>' + eur(f.total) + '</b>' + (f.ajustes ? '<small>ajustes ' + eur(f.ajustes) + '</small>' : '') + '</td></tr>'; }).join('') || vacio(3, 'Sin datos')) + '</table>';
+      (r.filas.map(function (f) { return '<tr><td>' + nomBonito(f.nombre) + '<small>' + esc(f.instrumento) + (f.refuerzo ? ' · refuerzo' : f.educando ? ' · educando' : '') + '</small></td><td class="c">' + f.n + '<small>' + pctTxt(f.pct) + '</small></td><td class="r"><b>' + eur(f.total) + '</b>' + (f.ajustes ? '<small>ajustes ' + eur(f.ajustes) + '</small>' : '') + '</td></tr>'; }).join('') || vacio(3, 'Sin datos')) + '</table>';
   } else if (r.tipo === 'ensayos') {
     h += kpis([[r.total, 'ensayos'], [String(r.mediaAsistentes).replace('.', ','), 'músicos de media'], [pctTxt(r.pctMedio), 'asistencia']]) +
       '<table class="inf-t"><tr><th>Músico</th><th class="c">Ensayos</th><th class="r">Faltas seguidas</th></tr>' +
-      (r.filas.map(function (f) { return '<tr><td>' + nomBonito(f.nombre) + '<small>' + esc(f.instrumento) + (f.educando ? ' · educando' : '') + '</small></td><td class="c">' + f.n + '<small>' + pctTxt(f.pct) + '</small></td><td class="r">' + (f.seguidas ? '<span class="inf-aviso">' + f.seguidas + '</span>' : '0') + '</td></tr>'; }).join('') || vacio(3, 'Sin ensayos')) + '</table>';
+      (r.filas.map(function (f) { return '<tr><td>' + nomBonito(f.nombre) + '<small>' + esc(f.instrumento) + (f.refuerzo ? ' · refuerzo' : f.educando ? ' · educando' : '') + '</small></td><td class="c">' + f.n + '<small>' + pctTxt(f.pct) + '</small></td><td class="r">' + (f.seguidas ? '<span class="inf-aviso">' + f.seguidas + '</span>' : '0') + '</td></tr>'; }).join('') || vacio(3, 'Sin ensayos')) + '</table>';
   } else if (r.tipo === 'ficha') {
-    h = h.replace('</b><span>', '</b><span>' + nomBonito(r.musico.nombre) + ' · ' + esc(r.musico.instrumento) + (r.musico.educando ? ' · educando' : '') + (r.musico.baja ? ' · de baja' : '') + '<br>');
+    h = h.replace('</b><span>', '</b><span>' + nomBonito(r.musico.nombre) + ' · ' + esc(r.musico.instrumento) + (r.musico.refuerzo ? ' · refuerzo' : r.musico.educando ? ' · educando' : '') + (r.musico.baja ? ' · de baja' : '') + '<br>');
     h += kpis([[r.n + '<small style="font-size:12px"> de ' + r.deActuaciones + '</small>', 'actuaciones'], [r.ensayos + '<small style="font-size:12px"> de ' + r.deEnsayos + '</small>', 'ensayos'], [eur(r.total), 'total']]) +
       '<table class="inf-t"><tr><th>Fecha</th><th>Actuación</th><th class="r">Importe</th></tr>' +
       (r.detalle.map(function (d) { return '<tr><td>' + d.fecha + '</td><td>' + esc(d.lugar) + '<small>' + esc(d.tipo) + '</small></td><td class="r">' + eur(d.importe) + '</td></tr>'; }).join('') || vacio(3, 'Sin actuaciones en este periodo')) +
