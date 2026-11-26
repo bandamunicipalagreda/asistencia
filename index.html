@@ -251,7 +251,7 @@ body.ens .m.on .ck{background:var(--azul);border-color:var(--azul);color:#fff}
           <label id="infMusL" class="oculto">Músico<select id="infMus"></select></label>
         </div>
         <div id="infRes"></div>
-        <div id="infPdfCaja" class="oculto"><button class="btn oscuro" id="infPdf" style="margin-top:14px">📄 Sacar el PDF firmado</button><p class="inf-nota" id="infPdfNota" style="margin-top:8px"></p></div>
+        <div id="infPdfCaja" class="oculto"><button class="btn oscuro" id="infPdf" style="margin-top:14px">📄 Sacar el PDF firmado</button><p class="inf-nota" id="infPdfNota" style="margin-top:8px"></p><div id="infPdfListo" class="oculto" style="margin-top:10px;background:#eef6ec;border:1px solid #cfe3ca;border-radius:16px;padding:12px"><p id="infPdfListoTxt" style="margin:0 0 10px;font-size:14px;color:#2f5d2b"></p><button class="btn oro" id="infPdfAbrir" style="margin:0">📤 Abrir o enviar el PDF</button></div></div>
       </div>
       <div id="firmaPanel" class="firma-velo oculto"><div class="firma-caja">
         <b class="firma-tit">Tu firma</b>
@@ -677,17 +677,24 @@ $('firmaQuitar').onclick = function () {
   if (!confirm('¿Quitar la firma guardada? El informe saldrá con la línea para firmar a mano.')) return;
   api('informes', { pin: PIN, pinDir: PIN_DIR, tipo: 'borrarFirma' }).then(function () { INF.firma = false; pintarEstadoFirma(); cerrarFirma(); toast('Firma quitada'); if (INF.abierto) infVer(); });
 };
+var PDF_LISTO = null;
 $('infPdf').onclick = function () {
-  var b = this; b.disabled = true; b.textContent = 'Preparando el PDF…';
+  var b = this; b.disabled = true; b.textContent = 'Preparando el PDF…'; PDF_LISTO = null; $('infPdfListo').classList.add('oculto');
   api('informes', { pin: PIN, pinDir: PIN_DIR, tipo: 'pdfAyuntamiento', periodo: $('infPer').value }).then(function (r) {
     var bin = atob(r.base64), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
-    var f = new File([u], r.nombre, { type: 'application/pdf' });
-    if (navigator.canShare && navigator.canShare({ files: [f] })) navigator.share({ files: [f], title: r.nombre }).catch(function () {});
-    else { var a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = r.nombre; document.body.appendChild(a); a.click(); a.remove(); }
-    toast(r.firmado ? '✓ PDF firmado. También queda guardado en Drive.' : 'PDF listo (sin firma). También queda en Drive.', 4000);
+    PDF_LISTO = new File([u], r.nombre, { type: 'application/pdf' });
+    $('infPdfListo').classList.remove('oculto');
+    $('infPdfListoTxt').innerHTML = (r.firmado ? '✓ <b>PDF firmado</b> listo.' : '✓ <b>PDF</b> listo (sin firma).') + ' También queda guardado en Drive, en Informes Ayuntamiento.';
   }).catch(infError).then(function () { b.disabled = false; pintarBotonPdf(); });
 };
+// Compartir o descargar tiene que ser justo al tocar: por eso va en su propio botón
+$('infPdfAbrir').onclick = function () {
+  if (!PDF_LISTO) return;
+  if (navigator.canShare && navigator.canShare({ files: [PDF_LISTO] })) navigator.share({ files: [PDF_LISTO], title: PDF_LISTO.name }).catch(function () {});
+  else { var a = document.createElement('a'); a.href = URL.createObjectURL(PDF_LISTO); a.download = PDF_LISTO.name; document.body.appendChild(a); a.click(); a.remove(); toast('Descargado: míralo en «Descargas»', 4000); }
+};
 function pintarBotonPdf() {
+  if (INF.tipo !== 'ayuntamiento') $('infPdfListo').classList.add('oculto');
   $('infPdfCaja').classList.toggle('oculto', INF.tipo !== 'ayuntamiento');
   $('infPdf').textContent = INF.firma ? '📄 Sacar el PDF firmado' : '📄 Sacar el PDF (sin firma)';
   $('infPdfNota').innerHTML = INF.firma ? 'Sale con tu firma y tu nombre. Se guarda también en Drive, en Informes Ayuntamiento.' : 'Todavía no has guardado tu firma: <a href="#" id="infFirmaYa" style="color:var(--oscuro);font-weight:600">firmar ahora</a>.';
